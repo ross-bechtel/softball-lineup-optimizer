@@ -25,16 +25,6 @@ MEN = set(PLAYERS.keys()) - WOMEN
 
 def is_legal_lineup(lineup):
     """Check if a lineup is legal (at most 3 men in a row, including wraparound)."""
-    n = len(lineup)
-    # Check normal sequence
-    consecutive_men = 0
-    for player in lineup:
-        if player in MEN:
-            consecutive_men += 1
-            if consecutive_men > 3:
-                return False
-        else:
-            consecutive_men = 0
     # Check wraparound: concatenate up to 3 from start to end
     max_wrap = 3
     wrap_lineup = list(lineup) + list(lineup)[:max_wrap]
@@ -108,6 +98,18 @@ def simulate_inning(player_list):
     
     return runs
 
+def simulate(player_list, verbose=True):
+    """Simulate a 6-inning game, returning total runs scored."""
+    total_runs = 0
+    
+    for inning in range(6):
+        inning_runs = simulate_inning(player_list)
+        total_runs += inning_runs
+        if verbose:
+            print(f"Inning {inning + 1}: {inning_runs} runs")
+    
+    return total_runs
+
 def simulate_multiple_games(player_list, num_games=10):
     """Simulate multiple games with the same lineup and return average runs."""
     total_runs = 0
@@ -170,18 +172,6 @@ def find_best_lineup(all_players, num_games_per_lineup=10, max_lineups_to_test=N
     
     total_time = time.time() - start_time
     return best_lineup, best_avg_runs, best_game_results, lineup_results, total_time
-
-def simulate(player_list, verbose=True):
-    """Simulate a 6-inning game, returning total runs scored."""
-    total_runs = 0
-    
-    for inning in range(6):
-        inning_runs = simulate_inning(player_list)
-        total_runs += inning_runs
-        if verbose:
-            print(f"Inning {inning + 1}: {inning_runs} runs")
-    
-    return total_runs
 
 if __name__ == "__main__":
     print("Softball Game Simulation")
