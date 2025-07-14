@@ -3,7 +3,8 @@ import random
 import itertools
 import time
 
-players = {
+# Globals to change before running
+PLAYERS = {
     "Ross": 0.65,      # Average bases per at-bat
     "Brendon": 0.9,
     "Lindsey": 0.3,
@@ -14,13 +15,13 @@ players = {
     "Thomas": 0.5,
     "Jake": 0.6,
     "Josh": 0.6,
-    "Srishti": 0.1,
-    "Allison": 0.2
+    #"Srishti": 0.1,
+    #"Allison": 0.2
 }
-
-# Define which players are women (the rest are men)
-women = {"Lindsey", "Kate", "Kaitlin", "Srishti", "Allison"}
-men = set(players.keys()) - women
+PLAYING = list(PLAYERS.keys())
+NUM_GAMES_PER_LINEUP = 10
+WOMEN = {"Lindsey", "Kate", "Kaitlin", "Srishti", "Allison"}
+MEN = set(PLAYERS.keys()) - WOMEN
 
 def is_legal_lineup(lineup):
     """Check if a lineup is legal (at most 3 men in a row, including wraparound)."""
@@ -28,7 +29,7 @@ def is_legal_lineup(lineup):
     # Check normal sequence
     consecutive_men = 0
     for player in lineup:
-        if player in men:
+        if player in MEN:
             consecutive_men += 1
             if consecutive_men > 3:
                 return False
@@ -39,7 +40,7 @@ def is_legal_lineup(lineup):
     wrap_lineup = list(lineup) + list(lineup)[:max_wrap]
     consecutive_men = 0
     for player in wrap_lineup:
-        if player in men:
+        if player in MEN:
             consecutive_men += 1
             if consecutive_men > 3:
                 return False
@@ -55,10 +56,10 @@ def generate_legal_lineups(all_players):
 
 def simulate_at_bat(player_name):
     """Simulate a single at-bat for a player, returning whole bases (0-4)."""
-    if player_name not in players:
+    if player_name not in PLAYERS:
         return 0
     
-    avg_bases = players[player_name]
+    avg_bases = PLAYERS[player_name]
     
     # Convert average bases to whole base outcomes
     # For example: 1.3 avg bases means 70% chance of 1 base, 30% chance of 2 bases
@@ -126,11 +127,12 @@ def find_best_lineup(all_players, num_games_per_lineup=10, max_lineups_to_test=N
     
     print(f"Testing lineups with {len(all_players)} players...")
     print(f"Each lineup will play {num_games_per_lineup} games")
-    print(f"Women: {', '.join(women)}")
-    print(f"Men: {', '.join(men)}")
+    print(f"Women: {', '.join(WOMEN)}")
+    print(f"Men: {', '.join(MEN)}")
     print(f"Rule: At most 3 men in a row")
     
     # Generate all legal lineups
+    print("Generating legal lineups...")
     all_lineups = generate_legal_lineups(all_players)
     print(f"Found {len(all_lineups):,} legal lineups out of {len(list(itertools.permutations(all_players))):,} total possible")
     
@@ -147,6 +149,8 @@ def find_best_lineup(all_players, num_games_per_lineup=10, max_lineups_to_test=N
     best_game_results = []
     
     lineup_results = []
+    total_lineups = len(all_lineups)
+    last_progress = 0
     
     for i, lineup in enumerate(all_lineups):
         avg_runs, game_results = simulate_multiple_games(list(lineup), num_games_per_lineup)
@@ -157,9 +161,12 @@ def find_best_lineup(all_players, num_games_per_lineup=10, max_lineups_to_test=N
             best_lineup = list(lineup)
             best_game_results = game_results
         
-        if (i + 1) % 10000 == 0:
+        # Progress tracking - update every 10%
+        current_progress = (i + 1) / total_lineups * 100
+        if current_progress >= last_progress + 10:
             elapsed = time.time() - start_time
-            print(f"Tested {i + 1:,}/{len(all_lineups):,} lineups... ({elapsed:.1f}s elapsed)")
+            print(f"Progress: {current_progress:.1f}% ({i + 1:,}/{total_lineups:,} lineups) - {elapsed:.1f}s elapsed")
+            last_progress = current_progress
     
     total_time = time.time() - start_time
     return best_lineup, best_avg_runs, best_game_results, lineup_results, total_time
@@ -180,23 +187,20 @@ if __name__ == "__main__":
     print("Softball Game Simulation")
     print("=" * 30)
     
-    # Get all players
-    all_players = list(players.keys())
-    
     # Find the best lineup
     print("Finding optimal batting order...")
     print()
     
     best_lineup, best_avg_runs, best_game_results, all_results, total_time = find_best_lineup(
-        all_players, 
-        num_games_per_lineup=10
+        PLAYING, 
+        num_games_per_lineup=NUM_GAMES_PER_LINEUP
     )
     
     print(f"\n🏆 BEST LINEUP FOUND:")
     print("=" * 40)
     if best_lineup:
         for i, player in enumerate(best_lineup, 1):
-            avg_bases = players[player]
+            avg_bases = PLAYERS[player]
             print(f"{i}. {player:<10} (avg: {avg_bases:.2f} bases)")
     
     print(f"\nAverage runs per game: {best_avg_runs:.2f}")
